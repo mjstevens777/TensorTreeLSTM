@@ -11,6 +11,7 @@ function TreeLSTM:__init(config)
   self.in_dim = config.in_dim
   if self.in_dim == nil then error('input dimension must be specified') end
   self.mem_dim = config.mem_dim or 150
+  self.red_dim = config.red_dim or 50
   self.mem_zeros = torch.zeros(self.mem_dim)
   self.train = false
 end

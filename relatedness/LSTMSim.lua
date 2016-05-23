@@ -8,6 +8,7 @@ local LSTMSim = torch.class('treelstm.LSTMSim')
 
 function LSTMSim:__init(config)
   self.mem_dim       = config.mem_dim       or 150
+  self.red_dim       = config.red_dim       or 50
   self.learning_rate = config.learning_rate or 0.05
   self.batch_size    = config.batch_size    or 25
   self.num_layers    = config.num_layers    or 1

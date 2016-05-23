@@ -58,23 +58,34 @@ function TensorTreeLSTM:new_composer()
 
   local new_bilinear_gate = function()
     -- Multiplicative interactions
-    local bilin = nn.Bilinear(self.red_dim, self.red_dim, self.mem_dim)
+    -- local bilin = nn.Bilinear(self.red_dim, self.red_dim, self.mem_dim)
     -- dimensionality reduction to reduce number of parameters
     local dim_red = nn.Linear(self.mem_dim, self.red_dim)
     local lh_red = dim_red(lh)
-    local rh_red = dim_red(rh)
+    local rh_red =  dim_red(rh)
+    local outer_product = nn.Reshape(self.red_dim*self.red_dim)(
+      nn.MM(){
+        nn.Reshape(self.red_dim, 1)(lh_red),
+        nn.Reshape(1, self.red_dim)(rh_red)
+      }
+    )
+
+    local tensor_product = nn.Linear(
+      self.red_dim * self.red_dim,
+      self.mem_dim
+    )(outer_product)
 
     return nn.CAddTable(){
-      nn.Linear(self.mem_dim, self.mem_dim)(lh), -- standard additive interaction
-      nn.Linear(self.mem_dim, self.mem_dim)(rh), -- standard additive interaction
-      bilin(lh_red, rh_red) -- Tensor interaction
+      nn.Linear(self.red_dim, self.mem_dim)(lh_red), -- standard additive interaction
+      nn.Linear(self.red_dim, self.mem_dim)(rh_red), -- standard additive interaction
+      tensor_product -- Tensor interaction
     }
   end
 
   local i = nn.Sigmoid()(new_gate())    -- input gate
   local lf = nn.Sigmoid()(new_gate())   -- left forget gate
   local rf = nn.Sigmoid()(new_gate())   -- right forget gate
-  local update = nn.Tanh()(new_gate())  -- memory cell update vector
+  local update = nn.Tanh()(new_bilinear_gate())  -- memory cell update vector
   local c = nn.CAddTable(){             -- memory cell
       nn.CMulTable(){i, update},
       nn.CMulTable(){lf, lc},

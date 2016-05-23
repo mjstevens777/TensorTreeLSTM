@@ -14,9 +14,10 @@ end
 -- read command line arguments
 local args = lapp [[
 Training script for sentiment classification on the SST dataset.
-  -m,--model  (default constituency) Model architecture: [constituency, lstm, bilstm]
+  -m,--model  (default constituency) Model architecture: [constituency, lstm, bilstm, tensor]
   -l,--layers (default 1)            Number of layers (ignored for Tree-LSTM)
   -d,--dim    (default 150)          LSTM memory dimension
+  -r,--reddim (default 50)           LSTM tensor dimension (only for tensor model)
   -e,--epochs (default 10)           Number of training epochs
   -b,--binary                        Train and evaluate on binary sub-task
 ]]
@@ -24,6 +25,9 @@ Training script for sentiment classification on the SST dataset.
 local model_name, model_class, model_structure
 if args.model == 'constituency' then
   model_name = 'Constituency Tree LSTM'
+  model_class = treelstm.TreeLSTMSentiment
+elseif args.model == 'tensor' then
+  model_name = 'Tesnor Tree LSTM'
   model_class = treelstm.TreeLSTMSentiment
 elseif args.model == 'dependency' then
   model_name = 'Dependency Tree LSTM'
@@ -92,6 +96,7 @@ local model = model_class{
   fine_grained = fine_grained,
   num_layers = args.layers,
   mem_dim = args.dim,
+  red_dim = args.reddim,
 }
 
 -- number of epochs to train
@@ -132,6 +137,7 @@ for i = 1, num_epochs do
       fine_grained = fine_grained,
       num_layers = args.layers,
       mem_dim = args.dim,
+      red_dim = args.reddim,
     }
     best_dev_model.params:copy(model.params)
     best_dev_model.emb.weight:copy(model.emb.weight)
@@ -160,9 +166,9 @@ local subtask = fine_grained and '5class' or '2class'
 local predictions_save_path, model_save_path
 while true do
   predictions_save_path = string.format(
-    treelstm.predictions_dir .. '/sent-%s.%s.%dl.%dd.%d.pred', args.model, subtask, args.layers, args.dim, file_idx)
+    treelstm.predictions_dir .. '/sent-%s.%s.%dl.%dd.%dd.%d.pred', args.model, subtask, args.layers, args.dim, args.reddim, file_idx)
   model_save_path = string.format(
-    treelstm.models_dir .. '/sent-%s.%s.%dl.%dd.%d.th', args.model, subtask, args.layers, args.dim, file_idx)
+    treelstm.models_dir .. '/sent-%s.%s.%dl.%dd.%dd.%d.th', args.model, subtask, args.layers, args.dim, args.reddim, file_idx)
   if lfs.attributes(predictions_save_path) == nil and lfs.attributes(model_save_path) == nil then
     break
   end

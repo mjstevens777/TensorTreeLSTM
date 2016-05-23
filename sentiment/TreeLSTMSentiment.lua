@@ -8,6 +8,7 @@ local TreeLSTMSentiment = torch.class('treelstm.TreeLSTMSentiment')
 
 function TreeLSTMSentiment:__init(config)
   self.mem_dim           = config.mem_dim           or 150
+  self.red_dim           = config.red_dim           or 50
   self.learning_rate     = config.learning_rate     or 0.05
   self.emb_learning_rate = config.emb_learning_rate or 0.1
   self.batch_size        = config.batch_size        or 25
@@ -41,6 +42,8 @@ function TreeLSTMSentiment:__init(config)
     self.treelstm = treelstm.ChildSumTreeLSTM(treelstm_config)
   elseif self.structure == 'constituency' then
     self.treelstm = treelstm.BinaryTreeLSTM(treelstm_config)
+  elseif self.structure == 'tensor' then
+    self.treelstm = treelstm.TensorTreeLSTM(treelstm_config)
   else
     error('invalid parse tree type: ' .. self.structure)
   end
@@ -144,6 +147,7 @@ function TreeLSTMSentiment:print_config()
   printf('%-25s = %d\n',   'num compositional params', num_params - num_sentiment_params)
   printf('%-25s = %d\n',   'word vector dim', self.emb_dim)
   printf('%-25s = %d\n',   'Tree-LSTM memory dim', self.mem_dim)
+  printf('%-25s = %d\n',   'Tree-LSTM tensor dim', self.red_dim)
   printf('%-25s = %.2e\n', 'regularization strength', self.reg)
   printf('%-25s = %d\n',   'minibatch size', self.batch_size)
   printf('%-25s = %.2e\n', 'learning rate', self.learning_rate)

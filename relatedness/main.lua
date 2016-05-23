@@ -16,9 +16,10 @@ end
 -- read command line arguments
 local args = lapp [[
 Training script for semantic relatedness prediction on the SICK dataset.
-  -m,--model  (default dependency) Model architecture: [dependency, constituency, lstm, bilstm]
+  -m,--model  (default dependency) Model architecture: [dependency, constituency, lstm, bilstm, tensor]
   -l,--layers (default 1)          Number of layers (ignored for Tree-LSTM)
   -d,--dim    (default 150)        LSTM memory dimension
+  -r,--reddim (default 50)         LSTM tensor dimension (only for tensor model)
   -e,--epochs (default 10)         Number of training epochs
 ]]
 
@@ -28,6 +29,9 @@ if args.model == 'dependency' then
   model_class = treelstm.TreeLSTMSim
 elseif args.model == 'constituency' then
   model_name = 'Constituency Tree LSTM'
+  model_class = treelstm.TreeLSTMSim
+elseif args.model == 'tensor' then
+  model_name = 'Tensor Tree LSTM'
   model_class = treelstm.TreeLSTMSim
 elseif args.model == 'lstm' then
   model_name = 'LSTM'
@@ -74,7 +78,7 @@ print('loading datasets')
 local train_dir = data_dir .. 'train/'
 local dev_dir = data_dir .. 'dev/'
 local test_dir = data_dir .. 'test/'
-local constituency = (args.model == 'constituency')
+local constituency = (args.model == 'constituency' or args.model == 'tensor')
 local train_dataset = treelstm.read_relatedness_dataset(train_dir, vocab, constituency)
 local dev_dataset = treelstm.read_relatedness_dataset(dev_dir, vocab, constituency)
 local test_dataset = treelstm.read_relatedness_dataset(test_dir, vocab, constituency)
@@ -88,6 +92,7 @@ local model = model_class{
   structure  = model_structure,
   num_layers = args.layers,
   mem_dim    = args.dim,
+  red_dim    = args.reddim,
 }
 
 -- number of epochs to train
@@ -127,6 +132,7 @@ for i = 1, num_epochs do
       structure = model_structure,
       num_layers = args.layers,
       mem_dim    = args.dim,
+      red_dim    = args.reddim,
     }
     best_dev_model.params:copy(model.params)
   end
@@ -154,9 +160,9 @@ local file_idx = 1
 local predictions_save_path, model_save_path
 while true do
   predictions_save_path = string.format(
-    treelstm.predictions_dir .. '/rel-%s.%dl.%dd.%d.pred', args.model, args.layers, args.dim, file_idx)
+    treelstm.predictions_dir .. '/rel-%s.%dl.%dd.%dd.%d.pred', args.model, args.layers, args.dim, args.reddim, file_idx)
   model_save_path = string.format(
-    treelstm.models_dir .. '/rel-%s.%dl.%dd.%d.th', args.model, args.layers, args.dim, file_idx)
+    treelstm.models_dir .. '/rel-%s.%dl.%dd.%d.th', args.model, args.layers, args.dim, args.reddim, file_idx)
   if lfs.attributes(predictions_save_path) == nil and lfs.attributes(model_save_path) == nil then
     break
   end
