@@ -60,13 +60,13 @@ function TensorTreeLSTM:new_composer()
     -- Multiplicative interactions
     -- local bilin = nn.Bilinear(self.red_dim, self.red_dim, self.mem_dim)
     -- dimensionality reduction to reduce number of parameters
-    local dim_red = nn.Linear(self.mem_dim, self.red_dim)
-    local lh_red = dim_red(lh)
-    local rh_red =  dim_red(rh)
+    local h = nn.JoinTable(1)({lh, rh})
+    local dim_red = nn.Linear(2 * self.mem_dim, self.red_dim)
+    local h_red = dim_red(h)
     local outer_product = nn.Reshape(self.red_dim*self.red_dim)(
       nn.MM(){
-        nn.Reshape(self.red_dim, 1)(lh_red),
-        nn.Reshape(1, self.red_dim)(rh_red)
+        nn.Unsqueeze(2)(h_red),
+        nn.Unsqueeze(1)(h_red)
       }
     )
 
@@ -76,8 +76,7 @@ function TensorTreeLSTM:new_composer()
     )(outer_product)
 
     return nn.CAddTable(){
-      nn.Linear(self.red_dim, self.mem_dim)(lh_red), -- standard additive interaction
-      nn.Linear(self.red_dim, self.mem_dim)(rh_red), -- standard additive interaction
+      new_gate(), -- standard additive interaction
       tensor_product -- Tensor interaction
     }
   end
