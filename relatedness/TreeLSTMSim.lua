@@ -34,6 +34,7 @@ function TreeLSTMSim:__init(config)
   local treelstm_config = {
     in_dim = self.emb_dim,
     mem_dim = self.mem_dim,
+    red_dim = self.red_dim,
     gate_output = false,
   }
 
@@ -193,6 +194,7 @@ function TreeLSTMSim:save(path)
     learning_rate = self.learning_rate,
     emb_learning_rate = self.emb_learning_rate,
     mem_dim       = self.mem_dim,
+    red_dim       = self.red_dim,
     sim_nhidden   = self.sim_nhidden,
     reg           = self.reg,
     structure     = self.structure,

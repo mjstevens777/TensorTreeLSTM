@@ -61,12 +61,14 @@ function TensorTreeLSTM:new_composer()
     -- local bilin = nn.Bilinear(self.red_dim, self.red_dim, self.mem_dim)
     -- dimensionality reduction to reduce number of parameters
     local h = nn.JoinTable(1)({lh, rh})
-    local dim_red = nn.Linear(2 * self.mem_dim, self.red_dim)
-    local h_red = dim_red(h)
+    local dim_red_l = nn.Linear(2 * self.mem_dim, self.red_dim)
+    local dim_red_r = nn.Linear(2 * self.mem_dim, self.red_dim)
+    local h_red_l = dim_red_l(h)
+    local h_red_r = dim_red_r(h)
     local outer_product = nn.Reshape(self.red_dim*self.red_dim)(
       nn.MM(){
-        nn.Unsqueeze(2)(h_red),
-        nn.Unsqueeze(1)(h_red)
+        nn.Unsqueeze(2)(h_red_l),
+        nn.Unsqueeze(1)(h_red_r)
       }
     )
 

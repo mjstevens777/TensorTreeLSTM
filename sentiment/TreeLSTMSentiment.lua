@@ -34,6 +34,7 @@ function TreeLSTMSentiment:__init(config)
   local treelstm_config = {
     in_dim  = self.emb_dim,
     mem_dim = self.mem_dim,
+    red_dim = self.red_dim,
     output_module_fn = function() return self:new_sentiment_module() end,
     criterion = self.criterion,
   }
@@ -164,6 +165,7 @@ function TreeLSTMSentiment:save(path)
     fine_grained      = self.fine_grained,
     learning_rate     = self.learning_rate,
     mem_dim           = self.mem_dim,
+    red_dim           = self.red_dim,
     reg               = self.reg,
     structure         = self.structure,
   }
